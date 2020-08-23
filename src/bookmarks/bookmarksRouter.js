@@ -66,7 +66,7 @@ bookmarksRouter
         logger.info(`Bookmark with id ${bookmark.id} created`)
         res 
           .status(201)
-          .location(`/bookmarks/${bookmark.id}`)
+          .location(`/api/bookmarks/${bookmark.id}`)
           .json(sanitizeBookmark(bookmark))
       })
       .catch(next)
@@ -100,6 +100,29 @@ bookmarksRouter
         res.status(204).end()
       })
       .catch(next)
-  });
+  })
+  .patch(bodyParser, (req, res, next) => {
+    const { title, url, description, rating } = req.body
+    const articleToUpdate = { title, url, description, rating }
+
+    if(!req.params.id) {
+      return res.status(400).json({
+        error: { message: 'Must provide id of bookmark to update'}
+      })
+    }
+    
+    const numberOfValues = Object.values(articleToUpdate).filter(Boolean).length
+    if(numberOfValues === 0) {
+      return res.status(400).json({
+        error: { message: 'Request body must contain either \'title\', \'url\', \'description\', or \'rating\''}
+      })
+    }
+    BookmarksService.updateBookmark(req.app.get('db'), req.params.id, articleToUpdate)
+      .then(numRowsAffected => {
+        res.status(204).end()
+      })
+      .catch(next)
+
+  })
 
 module.exports = bookmarksRouter;
